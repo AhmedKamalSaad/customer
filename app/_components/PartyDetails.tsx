@@ -18,10 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { PartyType } from "@prisma/client";
-import {
-  addTransaction,
-  updateTransactionField,
-} from "@/app/lib/actions";
+import { addTransaction, updateTransactionField } from "@/app/lib/actions";
 import { ExportExcelButton } from "./ExcelButton";
 import { toLocalDatetimeString } from "../lib/DateToLocal";
 import { DeleteTransactionWithDialog } from "./DeleteTransactionWithDialog";
@@ -147,181 +144,187 @@ export function PartyPage({ party, partyType }: PartyPageProps) {
 
         <div>
           <h2 className="text-xl font-semibold mb-4">سجل المعاملات</h2>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>الوصف</TableHead>
-                <TableHead className="text-right">مدين</TableHead>
-                <TableHead className="text-right">دائن</TableHead>
-                <TableHead>البنك</TableHead>
-                <TableHead>التاريخ</TableHead>
-                <TableHead className="text-right">الرصيد</TableHead>
-                <TableHead>إجراءات</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {transactionsWithBalance.map((transaction) => (
-                <TableRow key={transaction.id}>
-                  <TableCell>
-                    <form
-                      className="flex gap-2"
-                      action={async (formData: FormData) => {
-                        "use server";
-                        const newDesc = formData.get("description") as string;
-                        await updateTransactionField(
-                          transaction.id,
-                          "description",
-                          newDesc
-                        );
-                      }}
-                    >
-                      <Input
-                        type="text"
-                        name="description"
-                        defaultValue={transaction.description}
-                      />
-                      <Button type="submit" size="sm">
-                        حفظ
-                      </Button>
-                    </form>
-                  </TableCell>
-
-                  <TableCell className="text-right text-red-600">
-                    <form
-                      className="flex gap-2"
-                      action={async (formData: FormData) => {
-                        "use server";
-                        const val = formData.get("debit") as string;
-                        await updateTransactionField(
-                          transaction.id,
-                          "debit",
-                          val
-                        );
-                      }}
-                    >
-                      <Input
-                        type="number"
-                        step="0.01"
-                        name="debit"
-                        defaultValue={transaction.debit.toFixed(2)}
-                        className="w-full text-right"
-                      />
-                      <Button type="submit" size="sm">
-                        حفظ
-                      </Button>
-                    </form>
-                  </TableCell>
-
-                  <TableCell className="text-right text-green-600">
-                    <form
-                      className="flex gap-2"
-                      action={async (formData: FormData) => {
-                        "use server";
-                        const val = formData.get("credit") as string;
-                        await updateTransactionField(
-                          transaction.id,
-                          "credit",
-                          val
-                        );
-                      }}
-                    >
-                      <Input
-                        type="number"
-                        step="0.01"
-                        name="credit"
-                        defaultValue={transaction.credit.toFixed(2)}
-                        className="w-full text-right"
-                      />
-                      <Button type="submit" size="sm">
-                        حفظ
-                      </Button>
-                    </form>
-                  </TableCell>
-
-                  <TableCell>
-                    <form
-                      className="flex gap-2"
-                      action={async (formData: FormData) => {
-                        "use server";
-                        const val = formData.get("bank") as string;
-                        await updateTransactionField(
-                          transaction.id,
-                          "bank",
-                          val
-                        );
-                      }}
-                    >
-                      <Select
-                        name="bank"
-                        defaultValue={transaction.bank || "كاش"}
-                      >
-                        <SelectTrigger className="w-[180px]">
-                          <SelectValue placeholder="اختر البنك" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="كاش">كاش</SelectItem>
-                          <SelectItem value="بنك البلاد">بنك البلاد</SelectItem>
-                          <SelectItem value="بنك الراجحى">
-                            بنك الراجحى
-                          </SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <Button type="submit" size="sm">
-                        حفظ
-                      </Button>
-                    </form>
-                  </TableCell>
-
-                  <TableCell>
-                    <form
-                      className="flex gap-2"
-                      action={async (formData: FormData) => {
-                        "use server";
-                        const val = formData.get("date") as string;
-                        await updateTransactionField(
-                          transaction.id,
-                          "date",
-                          val
-                        );
-                      }}
-                    >
-                      <Input
-                        type="datetime-local"
-                        name="date"
-                        defaultValue={toLocalDatetimeString(
-                          transaction.date
-                            ? new Date(transaction.date)
-                            : new Date(transaction.createdAt)
-                        )}
-                      />
-                      <Button type="submit" size="sm">
-                        حفظ
-                      </Button>
-                    </form>
-                  </TableCell>
-
-                  <TableCell className="text-right">
-                    <Badge
-                      variant={
-                        transaction.balanceAtTransaction >= 0
-                          ? "default"
-                          : "destructive"
-                      }
-                    >
-                      {transaction.balanceAtTransaction.toFixed(2)}
-                    </Badge>
-                  </TableCell>
-
-                  <TableCell>
-                    <DeleteTransactionWithDialog
-                      id={transaction.id}
-                      itemName={transaction.description}
-                    />
-                  </TableCell>
+          <div className="overflow-x-auto w-full">
+            <Table className="min-w-[800px]">
+              <TableHeader>
+                <TableRow>
+                  <TableHead>الوصف</TableHead>
+                  <TableHead className="text-right">مدين</TableHead>
+                  <TableHead className="text-right">دائن</TableHead>
+                  <TableHead>البنك</TableHead>
+                  <TableHead>التاريخ</TableHead>
+                  <TableHead className="text-right">الرصيد</TableHead>
+                  <TableHead>إجراءات</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {transactionsWithBalance.map((transaction) => (
+                  <TableRow key={transaction.id}>
+                    <TableCell>
+                      <form
+                        className="flex gap-2"
+                        action={async (formData: FormData) => {
+                          "use server";
+                          const newDesc = formData.get("description") as string;
+                          await updateTransactionField(
+                            transaction.id,
+                            "description",
+                            newDesc
+                          );
+                        }}
+                      >
+                        <Input
+                          type="text"
+                          name="description"
+                          className="min-w-[200px] w-full"
+                          defaultValue={transaction.description}
+                        />
+                        <Button type="submit" size="sm">
+                          حفظ
+                        </Button>
+                      </form>
+                    </TableCell>
+
+                    <TableCell className="text-right text-red-600">
+                      <form
+                        className="flex gap-2"
+                        action={async (formData: FormData) => {
+                          "use server";
+                          const val = formData.get("debit") as string;
+                          await updateTransactionField(
+                            transaction.id,
+                            "debit",
+                            val
+                          );
+                        }}
+                      >
+                        <Input
+                          type="number"
+                          step="0.01"
+                          name="debit"
+                          defaultValue={transaction.debit.toFixed(2)}
+                          className="min-w-[100px] w-full text-right"
+                        />
+                        <Button type="submit" size="sm">
+                          حفظ
+                        </Button>
+                      </form>
+                    </TableCell>
+
+                    <TableCell className="text-right text-green-600">
+                      <form
+                        className="flex gap-2"
+                        action={async (formData: FormData) => {
+                          "use server";
+                          const val = formData.get("credit") as string;
+                          await updateTransactionField(
+                            transaction.id,
+                            "credit",
+                            val
+                          );
+                        }}
+                      >
+                        <Input
+                          type="number"
+                          step="0.01"
+                          name="credit"
+                          defaultValue={transaction.credit.toFixed(2)}
+                          className="min-w-[100px] w-full text-right"
+                        />
+                        <Button type="submit" size="sm">
+                          حفظ
+                        </Button>
+                      </form>
+                    </TableCell>
+
+                    <TableCell>
+                      <form
+                        className="flex gap-2"
+                        action={async (formData: FormData) => {
+                          "use server";
+                          const val = formData.get("bank") as string;
+                          await updateTransactionField(
+                            transaction.id,
+                            "bank",
+                            val
+                          );
+                        }}
+                      >
+                        <Select
+                          name="bank"
+                          defaultValue={transaction.bank || "كاش"}
+                        >
+                          <SelectTrigger className="w-[180px]">
+                            <SelectValue placeholder="اختر البنك" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="كاش">كاش</SelectItem>
+                            <SelectItem value="بنك البلاد">
+                              بنك البلاد
+                            </SelectItem>
+                            <SelectItem value="بنك الراجحى">
+                              بنك الراجحى
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <Button type="submit" size="sm">
+                          حفظ
+                        </Button>
+                      </form>
+                    </TableCell>
+
+                    <TableCell>
+                      <form
+                        className="flex gap-2"
+                        action={async (formData: FormData) => {
+                          "use server";
+                          const val = formData.get("date") as string;
+                          await updateTransactionField(
+                            transaction.id,
+                            "date",
+                            val
+                          );
+                        }}
+                      >
+                        <Input
+                          type="datetime-local"
+                          className="min-w-[180px] w-full"
+                          name="date"
+                          defaultValue={toLocalDatetimeString(
+                            transaction.date
+                              ? new Date(transaction.date)
+                              : new Date(transaction.createdAt)
+                          )}
+                        />
+                        <Button type="submit" size="sm">
+                          حفظ
+                        </Button>
+                      </form>
+                    </TableCell>
+
+                    <TableCell className="text-right">
+                      <Badge
+                        variant={
+                          transaction.balanceAtTransaction >= 0
+                            ? "default"
+                            : "destructive"
+                        }
+                      >
+                        {transaction.balanceAtTransaction.toFixed(2)}
+                      </Badge>
+                    </TableCell>
+
+                    <TableCell>
+                      <DeleteTransactionWithDialog
+                        id={transaction.id}
+                        itemName={transaction.description}
+                      />
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         </div>
       </div>
     </div>
