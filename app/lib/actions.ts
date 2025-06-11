@@ -1,101 +1,131 @@
 "use server";
 
 import { prisma } from "@/prisma/client";
+import { PartyType } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-
-// إضافة عميل جديد مع رصيد مدين أولي
-export async function addClient(formData: FormData) {
+export async function addParty(formData: FormData) {
   const name = formData.get("name") as string;
-  const initialDebit = parseFloat(formData.get("balance") as string);
+  const type = formData.get("type") as PartyType;
+  const initialDebit = parseFloat(formData.get("debit") as string) || 0;
+  const initialCredit = parseFloat(formData.get("credit") as string) || 0;
+  const bank = (formData.get("bank") as string) || "كاش";
+   const dateInput = formData.get("date") as string; 
+  const date = dateInput ? new Date(dateInput) : new Date(); 
 
-  // إنشاء العميل أولاً
-  const client = await prisma.client.create({
+  const party = await prisma.party.create({
     data: {
       name,
-      balance: initialDebit,
+      type,
+      balance: initialDebit - initialCredit,
     },
   });
 
-  // ثم إنشاء المعاملة الأولية المرتبطة به
   await prisma.transaction.create({
     data: {
-      description: "رصيد أولي",
+      description:
+        type === PartyType.CUSTOMER ? "رصيد أولي عميل" : "رصيد أولي مورد",
       debit: initialDebit,
-      credit: 0,
-      clientId: client.id, // استخدام معرف العميل مباشرة
+      credit: initialCredit,
+      bank,
+      partyId: party.id,
+      date: date,
     },
   });
 
-  revalidatePath("/clients");
-  redirect(`/clients/${client.id}`);
+  const redirectPath =
+    type === PartyType.CUSTOMER
+      ? `/clients/${party.id}`
+      : `/suppliers/${party.id}`;
+
+  revalidatePath(type === PartyType.CUSTOMER ? "/clients" : "/suppliers");
+  redirect(redirectPath);
 }
 
-// حذف عميل
-
-export async function deleteClient(formData: FormData) {
+export async function deleteParty(formData: FormData) {
   const id = formData.get("id") as string;
-  
-  // First delete all transactions for this client
-  await prisma.transaction.deleteMany({
-    where: { clientId: id }
-  });
 
-  // Then delete the client
-  await prisma.client.delete({
-    where: { id }
-  });
+  try {
+    const party = await prisma.party.findUnique({
+      where: { id },
+      select: { type: true },
+    });
 
-  revalidatePath("/clients");
-  redirect("/clients");
+    if (!party) throw new Error("Party not found");
+
+    await prisma.$transaction([
+      prisma.transaction.deleteMany({ where: { partyId: id } }),
+      prisma.party.delete({ where: { id } }),
+    ]);
+
+    const isCustomer = party.type === PartyType.CUSTOMER;
+    revalidatePath(isCustomer ? "/clients" : "/suppliers");
+    redirect(isCustomer ? "/clients" : "/suppliers");
+  } catch (error) {
+    console.error("Failed to delete party:", error);
+    throw error;
+  }
 }
-// إضافة معاملة جديدة
 
 export async function addTransaction(formData: FormData) {
-  const clientId = formData.get("clientId") as string;
-  const description = formData.get("description") as string;
-  const credit = parseFloat(formData.get("credit") as string) || 0;
-  const debit = parseFloat(formData.get("debit") as string) || 0;
-  const bank = formData.get("bank") as string;
-  const dateStr = formData.get("date") as string;
+  const rawData = {
+    partyId: formData.get("partyId") as string,
+    partyType: formData.get("partyType") as PartyType,
+    description: formData.get("description") as string,
+    debit: parseFloat(formData.get("debit") as string) || 0,
+    credit: parseFloat(formData.get("credit") as string) || 0,
+    bank: formData.get("bank") as string,
+    date: formData.get("date") as string,
+  };
 
-  const date = dateStr ? new Date(dateStr) : new Date();
+  if (!rawData.partyId || !rawData.description) {
+    throw new Error("Missing required fields");
+  }
 
-  const client = await prisma.client.findUnique({
-    where: { id: clientId },
-  });
+  const date = rawData.date ? new Date(rawData.date) : new Date();
+  const redirectPath = `/${
+    rawData.partyType === PartyType.SUPPLIER ? "suppliers" : "clients"
+  }/${rawData.partyId}`;
 
-  if (!client) throw new Error("Client not found");
+  try {
+    await prisma.$transaction([
+      prisma.transaction.create({
+        data: {
+          description: rawData.description,
+          debit: rawData.debit,
+          credit: rawData.credit,
+          bank: rawData.bank,
+          date,
+          partyId: rawData.partyId,
+        },
+      }),
+      prisma.party.update({
+        where: { id: rawData.partyId },
+        data: {
+          balance: {
+            increment: rawData.debit - rawData.credit,
+          },
+        },
+      }),
+    ]);
 
-  const currentBalance = client.balance.toNumber();
-  const newBalance = currentBalance + debit - credit;
-
-  await prisma.$transaction([
-    prisma.transaction.create({
-      data: {
-        description: `${description} - ${bank}`, // Include bank in description
-        credit,
-        debit,
-        bank,
-        clientId,
-        createdAt: date,
-        date,
-      },
-    }),
-    prisma.client.update({
-      where: { id: clientId },
-      data: { balance: newBalance },
-    }),
-  ]);
-
-  revalidatePath(`/clients/${clientId}`);
+    revalidatePath(redirectPath);
+  } catch (error) {
+    console.error("Failed to add transaction:", error);
+    throw error;
+  }
 }
+
 export async function updateTransactionField(
   id: string,
   field: "description" | "debit" | "credit" | "bank" | "date",
   value: string
 ) {
-  const tx = await prisma.transaction.findUnique({ where: { id } });
+  const tx = await prisma.transaction.findUnique({
+    where: { id },
+    include: { party: true },
+  });
+
   if (!tx) throw new Error("Transaction not found");
 
   const updatedData = {
@@ -112,31 +142,47 @@ export async function updateTransactionField(
     data: updatedData,
   });
 
-  await recalculateClientBalance(tx.clientId);
-  revalidatePath(`/clients/${tx.clientId}`);
+  await recalculatePartyBalance(tx.partyId);
+  revalidatePath(
+    `/${tx.party.type === PartyType.CUSTOMER ? "clients" : "suppliers"}/${
+      tx.partyId
+    }`
+  );
 }
+
 export async function deleteTransaction(id: string) {
-  const tx = await prisma.transaction.findUnique({ where: { id } });
+  const tx = await prisma.transaction.findUnique({
+    where: { id },
+    include: { party: true },
+  });
+
   if (!tx) throw new Error("Transaction not found");
 
   await prisma.transaction.delete({ where: { id } });
-  await recalculateClientBalance(tx.clientId);
-  revalidatePath(`/clients/${tx.clientId}`);
+  await recalculatePartyBalance(tx.partyId);
+  revalidatePath(
+    `/${tx.party.type === PartyType.CUSTOMER ? "clients" : "suppliers"}/${
+      tx.partyId
+    }`
+  );
 }
 
-export async function recalculateClientBalance(clientId: string) {
-  const transactions = await prisma.transaction.findMany({
-    where: { clientId },
-    orderBy: { createdAt: "asc" },
+async function recalculatePartyBalance(partyId: string) {
+  const party = await prisma.party.findUnique({
+    where: { id: partyId },
+    include: { transactions: true },
   });
 
-  const balance = transactions.reduce(
+  if (!party) throw new Error("Party not found");
+
+  const balance = party.transactions.reduce(
     (acc, tx) => acc + tx.debit.toNumber() - tx.credit.toNumber(),
     0
   );
 
-  await prisma.client.update({
-    where: { id: clientId },
+  await prisma.party.update({
+    where: { id: partyId },
     data: { balance },
   });
 }
+

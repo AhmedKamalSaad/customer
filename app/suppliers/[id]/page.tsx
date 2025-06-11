@@ -2,7 +2,7 @@
 import { PartyPage } from "@/app/_components/PartyDetails";
 import { prisma } from "@/prisma/client";
 
-export default async function ClientPage({
+export default async function SupplierPage({
   params,
 }: {
   params: Promise<{ id: string }>;
@@ -29,7 +29,7 @@ export default async function ClientPage({
           credit: tx.credit.toNumber(),
         })),
       }}
-      partyType="CUSTOMER"
+      partyType="SUPPLIER"
     />
   );
 }
