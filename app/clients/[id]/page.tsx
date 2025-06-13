@@ -27,6 +27,7 @@ export default async function ClientPage({
           ...tx,
           debit: tx.debit.toNumber(),
           credit: tx.credit.toNumber(),
+          bank: tx.bank ?? "",
         })),
       }}
       partyType="CUSTOMER"
