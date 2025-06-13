@@ -27,6 +27,7 @@ export default async function SupplierPage({
           ...tx,
           debit: tx.debit.toNumber(),
           credit: tx.credit.toNumber(),
+          bank: tx.bank ?? "",
         })),
       }}
       partyType="SUPPLIER"
