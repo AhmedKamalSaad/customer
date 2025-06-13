@@ -44,11 +44,12 @@ export function AddPartyForm({
 
       <div>
         <Label htmlFor="bank">البنك</Label>
-        <Select name="bank" required>
+        <Select name="bank" required={false}>
           <SelectTrigger className="mt-1">
             <SelectValue placeholder="اختر البنك" />
           </SelectTrigger>
           <SelectContent>
+            <SelectItem value="none">بدون بنك</SelectItem>
             <SelectItem value="كاش">كاش</SelectItem>
             <SelectItem value="بنك البلاد">بنك البلاد</SelectItem>
             <SelectItem value="بنك الراجحى">بنك الراجحى</SelectItem>

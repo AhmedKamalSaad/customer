@@ -9,9 +9,10 @@ export async function addParty(formData: FormData) {
   const type = formData.get("type") as PartyType;
   const initialDebit = parseFloat(formData.get("debit") as string) || 0;
   const initialCredit = parseFloat(formData.get("credit") as string) || 0;
-  const bank = (formData.get("bank") as string) || "كاش";
-   const dateInput = formData.get("date") as string; 
-  const date = dateInput ? new Date(dateInput) : new Date(); 
+  const bankValue = formData.get("bank") as string;
+  const bank = bankValue === "none" ? "" : bankValue;
+  const dateInput = formData.get("date") as string;
+  const date = dateInput ? new Date(dateInput) : new Date();
 
   const party = await prisma.party.create({
     data: {
@@ -185,4 +186,3 @@ async function recalculatePartyBalance(partyId: string) {
     data: { balance },
   });
 }
-

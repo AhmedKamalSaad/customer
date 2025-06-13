@@ -12,6 +12,8 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Party, PartyType, Transaction } from "@prisma/client";
 import { DeletePartyConfirmDialog } from "./DeletePartyConfirmDialog";
+import { ExportExcelButton } from "./ExcelButton";
+import ExportPartiesExcelButton from "./ExportPartiesExcelButton";
 
 interface PartyWithTransactions extends Party {
   transactions: Transaction[];
@@ -50,9 +52,12 @@ export function PartiesTable({
         <h1 className="text-2xl font-bold">
           قائمة {partyType === PartyType.CUSTOMER ? "العملاء" : "الموردين"}
         </h1>
-        <Link href={addRoute}>
-          <Button>إضافة {typeLabel} جديد</Button>
-        </Link>
+        <div className="flex gap-2">
+          <ExportPartiesExcelButton partyType={partyType} />
+          <Link href={addRoute}>
+            <Button>إضافة {typeLabel} جديد</Button>
+          </Link>
+        </div>
       </div>
 
       <Table>
@@ -86,6 +91,7 @@ export function PartiesTable({
                 <Link href={detailsRoute(party.id)}>
                   <Button variant="outline">عرض التفاصيل</Button>
                 </Link>
+                <ExportExcelButton partyId={party.id} />
                 <DeletePartyConfirmDialog partyId={party.id} />
               </TableCell>
             </TableRow>

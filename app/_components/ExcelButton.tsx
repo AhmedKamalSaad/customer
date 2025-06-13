@@ -24,7 +24,7 @@ export function ExportExcelButton({ partyId }: { partyId: string }) {
   };
 
   return (
-    <Button onClick={() => startTransition(handleExport)} disabled={isPending}>
+    <Button dir="rtl" onClick={() => startTransition(handleExport)} disabled={isPending}>
       {isPending ? "جارٍ التصدير..." : "تصدير إلى Excel"}
     </Button>
   );

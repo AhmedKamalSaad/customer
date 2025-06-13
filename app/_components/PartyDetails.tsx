@@ -112,11 +112,12 @@ export function PartyPage({ party, partyType }: PartyPageProps) {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="bank">البنك</Label>
-                <Select name="bank" required>
+                <Select name="bank" required={false}>
                   <SelectTrigger className="mt-1">
                     <SelectValue placeholder="اختر البنك" />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="none"></SelectItem>
                     <SelectItem value="كاش">كاش</SelectItem>
                     <SelectItem value="بنك البلاد">بنك البلاد</SelectItem>
                     <SelectItem value="بنك الراجحى">بنك الراجحى</SelectItem>
@@ -252,12 +253,13 @@ export function PartyPage({ party, partyType }: PartyPageProps) {
                       >
                         <Select
                           name="bank"
-                          defaultValue={transaction.bank || "كاش"}
+                          defaultValue={transaction.bank || ""}
                         >
                           <SelectTrigger className="w-[180px]">
                             <SelectValue placeholder="اختر البنك" />
                           </SelectTrigger>
                           <SelectContent>
+                            <SelectItem value="none"></SelectItem>
                             <SelectItem value="كاش">كاش</SelectItem>
                             <SelectItem value="بنك البلاد">
                               بنك البلاد

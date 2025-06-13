@@ -6,7 +6,9 @@ import { NextResponse } from "next/server";
 
 // تحويل الأرقام إلى أرقام عربية
 function toArabicNumber(value: string | number): string {
-  return value.toString().replace(/\d/g, (d) => String.fromCharCode(0x0660 + Number(d)));
+  return value
+    .toString()
+    .replace(/\d/g, (d) => String.fromCharCode(0x0660 + Number(d)));
 }
 
 function formatFullDate(date?: Date): string {
@@ -82,7 +84,7 @@ export async function exportTransactionsToExcel(partyId: string) {
       description: tx.description,
       debit: debit ? toArabicNumber(debit.toFixed(2)) : "",
       credit: credit ? toArabicNumber(credit.toFixed(2)) : "",
-      bank: tx.bank,
+      bank: tx.bank === "none" ? "" : tx.bank,
       date: toArabicNumber(formatFullDate(tx.date)),
       balance: toArabicNumber(runningBalance.toFixed(2)),
     });

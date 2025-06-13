@@ -27,7 +27,7 @@ model Transaction {
   description String
   credit      Decimal   @default(0)
   debit       Decimal   @default(0)
-  bank        String    @default("كاش")
+  bank        String?    @default("") 
   party       Party     @relation(fields: [partyId], references: [id])
   partyId     String
   createdAt   DateTime  @default(now())
