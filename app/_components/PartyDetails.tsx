@@ -51,7 +51,7 @@ export function PartyPage({ party, partyType }: PartyPageProps) {
       ...tx,
       balanceAtTransaction: runningBalance,
     };
-  });
+  }).reverse();
 
   return (
     <div className="container mx-auto py-8">
@@ -129,7 +129,7 @@ export function PartyPage({ party, partyType }: PartyPageProps) {
                 <Input
                   id="date"
                   name="date"
-                  type="datetime-local"
+                  type="date"
                   required
                   className="mt-1"
                   defaultValue={toLocalDatetimeString(new Date())}
@@ -289,7 +289,7 @@ export function PartyPage({ party, partyType }: PartyPageProps) {
                         }}
                       >
                         <Input
-                          type="datetime-local"
+                          type="date"
                           className="min-w-[180px] w-full"
                           name="date"
                           defaultValue={toLocalDatetimeString(

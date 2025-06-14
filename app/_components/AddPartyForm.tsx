@@ -71,7 +71,7 @@ export function AddPartyForm({
         <Input
           id="date"
           name="date"
-          type="datetime-local"
+          type="date"
           required
           className="mt-1"
           defaultValue={toLocalDatetimeString(new Date())}
