@@ -10,6 +10,7 @@ function toArabicNumber(value: string | number): string {
     .replace(/\d/g, (d) => String.fromCharCode(0x0660 + Number(d)));
 }
 
+// تنسيق التاريخ بدون وقت
 function formatFullDate(date?: Date): string {
   if (!date) return "";
   const d = new Date(date);
@@ -25,28 +26,45 @@ export async function exportTransactionsToExcel(partyId: string) {
   const party = await prisma.party.findUnique({
     where: { id: partyId },
     include: {
-      transactions: { orderBy: { date: "asc" } }, // 🔥 الترتيب من الأقدم للأحدث
+      transactions: { orderBy: { date: "asc" } },
     },
   });
 
-  if (!party) {
-    throw new Error("Party not found");
+  if (!party || !party.transactions.length) {
+    return new Response("لا توجد بيانات للتصدير", { status: 400 });
   }
 
   const workbook = new ExcelJS.Workbook();
   const sheet = workbook.addWorksheet("Transactions");
 
-  // رأس الجدول
-  sheet.columns = [
-    { header: "الوصف", key: "description", width: 40 },
-    { header: "مدين", key: "debit", width: 15 },
-    { header: "دائن", key: "credit", width: 15 },
-    { header: "البنك", key: "bank", width: 25 },
-    { header: "التاريخ", key: "date", width: 25 },
-    { header: "الرصيد", key: "balance", width: 20 },
+  // 🔵 إضافة اسم العميل أو المورد في الأعلى
+  sheet.mergeCells("A1", "G1");
+  const titleCell = sheet.getCell("A1");
+  titleCell.value = `${party.name}`;
+  titleCell.font = {
+    bold: true,
+    size: 16,
+    color: { argb: "FF000000" },
+  };
+  titleCell.alignment = { vertical: "middle", horizontal: "center" };
+  titleCell.fill = {
+    type: "pattern",
+    pattern: "solid",
+    fgColor: { argb: "FFBDD7EE" },
+  };
+
+  // 🔵 ترويسة الأعمدة تبدأ من الصف الثاني
+  sheet.getRow(2).values = [
+    "",
+    "الوصف",
+    "مدين",
+    "دائن",
+    "البنك",
+    "التاريخ",
+    "الرصيد",
   ];
 
-  sheet.getRow(1).eachCell((cell) => {
+  sheet.getRow(2).eachCell((cell) => {
     cell.font = { bold: true, color: { argb: "FFFFFFFF" } };
     cell.fill = {
       type: "pattern",
@@ -62,21 +80,30 @@ export async function exportTransactionsToExcel(partyId: string) {
     };
   });
 
-  const transactions = party.transactions;
+  // 🔵 إعداد عرض الأعمدة
+  sheet.columns = [
+    { key: "description", width: 40 },
+    { key: "debit", width: 15 },
+    { key: "credit", width: 15 },
+    { key: "bank", width: 25 },
+    { key: "date", width: 25 },
+    { key: "balance", width: 20 },
+  ];
+
+  // 🔵 بيانات المعاملات
   let runningBalance = 0;
   let totalDebit = 0;
   let totalCredit = 0;
+  let currentRowIndex = 3;
 
-  // 🔥 نحسب الرصيد بشكل تصاعدي حسب العمليات
-  for (const tx of transactions) {
+  for (const tx of party.transactions) {
     const debit = Number(tx.debit ?? 0);
     const credit = Number(tx.credit ?? 0);
     totalDebit += debit;
     totalCredit += credit;
-
     runningBalance += debit - credit;
 
-    const row = sheet.addRow({
+    const row = sheet.insertRow(currentRowIndex++, {
       description: tx.description,
       debit: debit ? toArabicNumber(debit.toFixed(2)) : "",
       credit: credit ? toArabicNumber(credit.toFixed(2)) : "",
@@ -93,8 +120,8 @@ export async function exportTransactionsToExcel(partyId: string) {
     });
   }
 
-  // صف الإجمالي
-  const totalRow = sheet.addRow({
+  // 🔵 صف الإجمالي
+  const totalRow = sheet.insertRow(currentRowIndex, {
     description: "الإجمالي",
     debit: toArabicNumber(totalDebit.toFixed(2)),
     credit: toArabicNumber(totalCredit.toFixed(2)),
@@ -116,9 +143,8 @@ export async function exportTransactionsToExcel(partyId: string) {
       right: { style: "thin" },
     };
   });
-  if (!party || !party.transactions.length) {
-    return new Response("لا توجد بيانات للتصدير", { status: 400 });
-  }
+
+  // 🔵 إنشاء الملف للتحميل
   const buffer = await workbook.xlsx.writeBuffer();
 
   return new Response(buffer, {
