@@ -1,4 +1,6 @@
-// components/AddPartyForm.tsx
+"use client";
+
+import { useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,9 +22,16 @@ export function AddPartyForm({
   action: (formData: FormData) => void;
 }) {
   const isSupplier = partyType === PartyType.SUPPLIER;
+  const [isPending, startTransition] = useTransition();
+
+  const handleSubmit = (formData: FormData) => {
+    startTransition(() => {
+      action(formData);
+    });
+  };
 
   return (
-    <form action={action} className="space-y-4">
+    <form action={handleSubmit} className="space-y-4">
       <input type="hidden" name="type" value={partyType} />
 
       <div>
@@ -69,8 +78,8 @@ export function AddPartyForm({
         />
       </div>
 
-      <Button type="submit" className="w-full">
-        {isSupplier ? "إضافة المورد" : "إضافة العميل"}
+      <Button type="submit" className="w-full" disabled={isPending}>
+        {isPending ? "جاري الإضافة..." : isSupplier ? "إضافة المورد" : "إضافة العميل"}
       </Button>
     </form>
   );
