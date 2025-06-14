@@ -2,7 +2,6 @@
 
 import { prisma } from "@/prisma/client";
 import ExcelJS from "exceljs";
-import { NextResponse } from "next/server";
 
 // تحويل الأرقام إلى أرقام عربية
 function toArabicNumber(value: string | number): string {
@@ -120,15 +119,19 @@ export async function exportTransactionsToExcel(partyId: string) {
       right: { style: "thin" },
     };
   });
-
+  if (!party || !party.transactions.length) {
+    return new Response("لا توجد بيانات للتصدير", { status: 400 });
+  }
   const buffer = await workbook.xlsx.writeBuffer();
 
-  return new NextResponse(buffer, {
+  return new Response(buffer, {
     status: 200,
     headers: {
       "Content-Type":
         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-      "Content-Disposition": `attachment; filename="${party.name}-transactions.xlsx"`,
+      "Content-Disposition": `attachment; filename*=UTF-8''${encodeURIComponent(
+        party.name
+      )}-transactions.xlsx`,
     },
   });
 }
