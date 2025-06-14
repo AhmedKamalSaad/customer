@@ -61,7 +61,6 @@ export async function deleteParty(formData: FormData) {
 
     const isCustomer = party.type === PartyType.CUSTOMER;
     revalidatePath(isCustomer ? "/clients" : "/suppliers");
-    redirect(isCustomer ? "/clients" : "/suppliers");
   } catch (error) {
     console.error("Failed to delete party:", error);
     throw error;
