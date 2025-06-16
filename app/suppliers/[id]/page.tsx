@@ -1,5 +1,6 @@
 // app/clients/[id]/page.tsx
 import { PartyPage } from "@/app/_components/PartyDetails";
+import { checkAdminSession } from "@/lib/actions/checkAdminSession";
 import { prisma } from "@/prisma/client";
 
 export default async function SupplierPage({
@@ -7,6 +8,8 @@ export default async function SupplierPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
+    await checkAdminSession();
+  
   const { id } = await params;
   const client = await prisma.party.findUnique({
     where: { id: id },

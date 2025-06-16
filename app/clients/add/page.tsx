@@ -3,8 +3,11 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { addParty } from "@/app/lib/actions";
 import { PartyType } from "@prisma/client";
 import { AddPartyForm } from "@/app/_components/AddPartyForm";
+import { checkAdminSession } from "@/lib/actions/checkAdminSession";
 
-export default function AddCustomerPage() {
+export default async function AddCustomerPage() {
+    await checkAdminSession();
+  
   return (
     <div className="container mx-auto py-8">
       <Card className="max-w-md mx-auto">
