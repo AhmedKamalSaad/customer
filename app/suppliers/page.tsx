@@ -4,7 +4,14 @@ import { PartyType } from "@prisma/client";
 import { PartiesTable } from "../_components/PartiesTable";
 import { getPartiesWithSummary } from "../lib/parties";
 
-export default async function SuppliersPage() {
-  const parties = await getPartiesWithSummary(PartyType.SUPPLIER);
+export default async function SuppliersPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
+  const { search } = await searchParams;
+  const searchText = typeof search === "string" ? search : "";
+
+  const parties = await getPartiesWithSummary(PartyType.SUPPLIER, searchText);
   return <PartiesTable parties={parties} partyType={PartyType.SUPPLIER} />;
 }

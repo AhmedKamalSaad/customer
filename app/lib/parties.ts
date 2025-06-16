@@ -2,12 +2,17 @@
 import { prisma } from "@/prisma/client";
 import { Party, PartyType, Transaction } from "@prisma/client";
 
-export async function getPartiesWithSummary(partyType: PartyType) {
+export async function getPartiesWithSummary(partyType: PartyType, search = "") {
   const parties = await prisma.party.findMany({
-    where: { type: partyType },
+    where: {
+      type: partyType,
+      name: {
+        contains: search,
+        mode: "insensitive",
+      },
+    },
     include: { transactions: true },
   });
-
   return parties.map(party => {
     const totalDebit = party.transactions.reduce((sum, tx) => sum + tx.debit.toNumber(), 0);
     const totalCredit = party.transactions.reduce((sum, tx) => sum + tx.credit.toNumber(), 0);

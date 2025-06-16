@@ -1,10 +1,19 @@
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
+
 import { PartyType } from "@prisma/client";
 import { PartiesTable } from "../_components/PartiesTable";
 import { getPartiesWithSummary } from "../lib/parties";
 
-export default async function ClientsPage() {
-  const parties = await getPartiesWithSummary(PartyType.CUSTOMER);
+export default async function ClientsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
+  const { search } = await searchParams;
+  const searchText = typeof search === "string" ? search : "";
+
+  const parties = await getPartiesWithSummary(PartyType.CUSTOMER, searchText);
+
   return <PartiesTable parties={parties} partyType={PartyType.CUSTOMER} />;
 }

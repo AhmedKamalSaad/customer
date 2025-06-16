@@ -14,6 +14,7 @@ import { Party, PartyType, Transaction } from "@prisma/client";
 import { DeletePartyConfirmDialog } from "./DeletePartyConfirmDialog";
 import { ExportExcelButton } from "./ExcelButton";
 import ExportPartiesExcelButton from "./ExportPartiesExcelButton";
+import PartySearchInput from "./PartySearchInput";
 
 interface PartyWithTransactions extends Party {
   transactions: Transaction[];
@@ -48,16 +49,17 @@ export function PartiesTable({
 
   return (
     <div className="container mx-auto py-8">
-      <div className="flex justify-between items-center mb-8">
+      <div className="flex justify-between items-center mb-8 flex-wrap gap-2">
         <h1 className="text-2xl font-bold">
           قائمة {partyType === PartyType.CUSTOMER ? "العملاء" : "الموردين"}
         </h1>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           <ExportPartiesExcelButton partyType={partyType} />
           <Link href={addRoute}>
             <Button>إضافة {typeLabel} جديد</Button>
           </Link>
         </div>
+        <PartySearchInput placeholder={`ابحث باسم ${typeLabel}`} />
       </div>
 
       <Table>
