@@ -14,23 +14,24 @@ enum PartyType {
 }
 
 model Party {
-  id          String      @id @default(cuid())
-  name        String
-  type        PartyType
-  balance     Decimal
+  id           String        @id @default(cuid())
+  name         String
+  type         PartyType
+  balance      Decimal
   transactions Transaction[]
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
 }
 
 model Transaction {
-  id          String    @id @default(cuid())
+  id          String   @id @default(cuid())
   description String
-  credit      Decimal   @default(0)
-  debit       Decimal   @default(0)
-  bank        String?    @default("") 
-  party       Party     @relation(fields: [partyId], references: [id])
+  credit      Decimal  @default(0)
+  debit       Decimal  @default(0)
+  bank        String?  @default("")
+  expense     String?  @default("")
+  party       Party    @relation(fields: [partyId], references: [id])
   partyId     String
-  createdAt   DateTime  @default(now())
-  date        DateTime  @default(now())
+  createdAt   DateTime @default(now())
+  date        DateTime @default(now())
 }

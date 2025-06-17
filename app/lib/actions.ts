@@ -4,35 +4,46 @@ import { prisma } from "@/prisma/client";
 import { PartyType } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+
 export async function addParty(formData: FormData) {
   const name = formData.get("name") as string;
   const type = formData.get("type") as PartyType;
-  const initialDebit = parseFloat(formData.get("debit") as string) || 0;
-  const initialCredit = parseFloat(formData.get("credit") as string) || 0;
+  const initialBalance = parseFloat(formData.get("balance") as string) || 0;
   const bankValue = formData.get("bank") as string;
   const bank = bankValue === "none" ? "" : bankValue;
   const dateInput = formData.get("date") as string;
   const date = dateInput ? new Date(dateInput) : new Date();
+  const expense = formData.get("expense") as string;
 
+  // أنشئ الطرف برصيد 0 مؤقتًا — سيتم احتسابه لاحقًا من المعاملات
   const party = await prisma.party.create({
     data: {
       name,
       type,
-      balance: initialDebit - initialCredit,
+      balance: 0,
     },
   });
 
+  // أضف أول معاملة، ونسجلها كمدين دائمًا
   await prisma.transaction.create({
     data: {
       description:
-        type === PartyType.CUSTOMER ? "رصيد أولي عميل" : "رصيد أولي مورد",
-      debit: initialDebit,
-      credit: initialCredit,
+        type === PartyType.CUSTOMER
+          ? "رصيد أولي عميل"
+          : type === PartyType.SUPPLIER
+          ? "رصيد أولي مورد"
+          : "رصيد أولي عهدة",
+      debit: initialBalance,
+      credit: 0,
       bank,
+      expense: type === PartyType.CUSTODY ? expense || "" : "",
       partyId: party.id,
-      date: date,
+      date,
     },
   });
+
+  // إعادة احتساب الرصيد من المعاملات
+  await recalculatePartyBalance(party.id);
 
   const redirectPath =
     type === PartyType.CUSTOMER
@@ -40,6 +51,7 @@ export async function addParty(formData: FormData) {
       : type === PartyType.SUPPLIER
       ? `/suppliers/${party.id}`
       : `/custodies/${party.id}`;
+
   revalidatePath(
     type === PartyType.CUSTOMER
       ? "/clients"
@@ -47,6 +59,7 @@ export async function addParty(formData: FormData) {
       ? "/suppliers"
       : "/custodies"
   );
+
   redirect(redirectPath);
 }
 
@@ -88,6 +101,7 @@ export async function addTransaction(formData: FormData) {
     credit: parseFloat(formData.get("credit") as string) || 0,
     bank: formData.get("bank") as string,
     date: formData.get("date") as string,
+    expense: formData.get("expense") as string,
   };
 
   if (!rawData.partyId || !rawData.description) {
@@ -111,6 +125,10 @@ export async function addTransaction(formData: FormData) {
           debit: rawData.debit,
           credit: rawData.credit,
           bank: rawData.bank,
+          expense:
+            rawData.partyType === PartyType.CUSTODY
+              ? rawData.expense || ""
+              : "",
           date,
           partyId: rawData.partyId,
         },
@@ -134,7 +152,7 @@ export async function addTransaction(formData: FormData) {
 
 export async function updateTransactionField(
   id: string,
-  field: "description" | "debit" | "credit" | "bank" | "date",
+  field: "description" | "debit" | "credit" | "bank" | "date" | "expense",
   value: string
 ) {
   const tx = await prisma.transaction.findUnique({
@@ -146,7 +164,7 @@ export async function updateTransactionField(
 
   const updatedData = {
     [field]:
-      field === "description" || field === "bank"
+      field === "description" || field === "bank" || field === "expense"
         ? value
         : field === "date"
         ? new Date(value)

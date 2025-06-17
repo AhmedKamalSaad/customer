@@ -22,6 +22,7 @@ import { addTransaction, updateTransactionField } from "@/app/lib/actions";
 import { ExportExcelButton } from "./ExcelButton";
 import { toLocalDatetimeString } from "../lib/DateToLocal";
 import { DeleteTransactionWithDialog } from "./DeleteTransactionWithDialog";
+import { expenses } from "../lib/Expenses";
 
 interface Transaction {
   id: string;
@@ -31,6 +32,7 @@ interface Transaction {
   bank: string;
   date: Date | null;
   createdAt: Date;
+  expense?: string; // تمت إضافته هنا مؤقتًا
 }
 
 interface PartyPageProps {
@@ -45,13 +47,15 @@ interface PartyPageProps {
 
 export function PartyPage({ party, partyType }: PartyPageProps) {
   let runningBalance = 0;
-  const transactionsWithBalance = party.transactions.map((tx) => {
-    runningBalance += tx.debit - tx.credit;
-    return {
-      ...tx,
-      balanceAtTransaction: runningBalance,
-    };
-  }).reverse();
+  const transactionsWithBalance = party.transactions
+    .map((tx) => {
+      runningBalance += tx.debit - tx.credit;
+      return {
+        ...tx,
+        balanceAtTransaction: runningBalance,
+      };
+    })
+    .reverse();
 
   return (
     <div className="container mx-auto py-8">
@@ -67,6 +71,7 @@ export function PartyPage({ party, partyType }: PartyPageProps) {
       </div>
 
       <div className="flex flex-col gap-8">
+        {/* نموذج إضافة معاملة */}
         <div>
           <h2 className="text-xl font-semibold mb-4">إضافة معاملة</h2>
           <form action={addTransaction} className="space-y-4">
@@ -75,13 +80,7 @@ export function PartyPage({ party, partyType }: PartyPageProps) {
 
             <div>
               <Label htmlFor="description">وصف المعاملة</Label>
-              <Input
-                id="description"
-                name="description"
-                type="text"
-                required
-                className="mt-1"
-              />
+              <Input id="description" name="description" type="text" required />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -92,7 +91,6 @@ export function PartyPage({ party, partyType }: PartyPageProps) {
                   name="debit"
                   type="number"
                   step="0.01"
-                  className="mt-1"
                   placeholder="0.00"
                 />
               </div>
@@ -103,7 +101,6 @@ export function PartyPage({ party, partyType }: PartyPageProps) {
                   name="credit"
                   type="number"
                   step="0.01"
-                  className="mt-1"
                   placeholder="0.00"
                 />
               </div>
@@ -111,7 +108,7 @@ export function PartyPage({ party, partyType }: PartyPageProps) {
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="bank">البنك</Label>
+                <Label htmlFor="bank">مصادر التمويل</Label>
                 <Select name="bank" required={false}>
                   <SelectTrigger className="mt-1">
                     <SelectValue placeholder="اختر البنك" />
@@ -121,6 +118,25 @@ export function PartyPage({ party, partyType }: PartyPageProps) {
                     <SelectItem value="كاش">كاش</SelectItem>
                     <SelectItem value="بنك البلاد">بنك البلاد</SelectItem>
                     <SelectItem value="بنك الراجحى">بنك الراجحى</SelectItem>
+                    {partyType === "CUSTODY" && (
+                      <>
+                        <SelectItem value="تمويل إيجار">تمويل إيجار</SelectItem>
+                        <SelectItem value="تمويل تلحيق">تمويل تلحيق</SelectItem>
+                        <SelectItem value="تمويل من المكبس">
+                          تمويل من المكبس
+                        </SelectItem>
+                        <SelectItem value="تمويل قص ألواح">
+                          تمويل قص ألواح
+                        </SelectItem>
+                        <SelectItem value="بيع قشرة خشب">
+                          بيع قشرة خشب
+                        </SelectItem>
+                        <SelectItem value="بيع أبلكاش">بيع أبلكاش</SelectItem>
+                        <SelectItem value="مبيعات العملاء">
+                          مبيعات العملاء
+                        </SelectItem>
+                      </>
+                    )}
                   </SelectContent>
                 </Select>
               </div>
@@ -131,11 +147,27 @@ export function PartyPage({ party, partyType }: PartyPageProps) {
                   name="date"
                   type="date"
                   required
-                  className="mt-1"
                   defaultValue={toLocalDatetimeString(new Date())}
                 />
               </div>
             </div>
+            {partyType === "CUSTODY" && (
+              <div>
+                <Label htmlFor="expense">نوع المصروف</Label>
+                <Select name="expense" required>
+                  <SelectTrigger className="mt-1">
+                    <SelectValue placeholder="اختر نوع المصروف" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {expenses.map((expense) => (
+                      <SelectItem key={expense} value={expense}>
+                        {expense}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
 
             <Button type="submit" className="w-full">
               إضافة معاملة
@@ -143,10 +175,11 @@ export function PartyPage({ party, partyType }: PartyPageProps) {
           </form>
         </div>
 
+        {/* جدول سجل المعاملات */}
         <div>
           <h2 className="text-xl font-semibold mb-4">سجل المعاملات</h2>
           <div className="overflow-x-auto w-full">
-            <Table className="min-w-[800px]">
+            <Table className="min-w-[900px]">
               <TableHeader>
                 <TableRow>
                   <TableHead>الوصف</TableHead>
@@ -154,6 +187,9 @@ export function PartyPage({ party, partyType }: PartyPageProps) {
                   <TableHead className="text-right">دائن</TableHead>
                   <TableHead>البنك</TableHead>
                   <TableHead>التاريخ</TableHead>
+                  {partyType === "CUSTODY" && (
+                    <TableHead>نوع المصروف</TableHead>
+                  )}
                   <TableHead className="text-right">الرصيد</TableHead>
                   <TableHead>إجراءات</TableHead>
                 </TableRow>
@@ -161,10 +197,11 @@ export function PartyPage({ party, partyType }: PartyPageProps) {
               <TableBody>
                 {transactionsWithBalance.map((transaction) => (
                   <TableRow key={transaction.id}>
+                    {/* الوصف */}
                     <TableCell>
                       <form
                         className="flex gap-2"
-                        action={async (formData: FormData) => {
+                        action={async (formData) => {
                           "use server";
                           const newDesc = formData.get("description") as string;
                           await updateTransactionField(
@@ -177,8 +214,8 @@ export function PartyPage({ party, partyType }: PartyPageProps) {
                         <Input
                           type="text"
                           name="description"
-                          className="min-w-[200px] w-full"
                           defaultValue={transaction.description}
+                          className="min-w-[200px] w-full"
                         />
                         <Button type="submit" size="sm">
                           حفظ
@@ -186,10 +223,11 @@ export function PartyPage({ party, partyType }: PartyPageProps) {
                       </form>
                     </TableCell>
 
+                    {/* مدين */}
                     <TableCell className="text-right text-red-600">
                       <form
                         className="flex gap-2"
-                        action={async (formData: FormData) => {
+                        action={async (formData) => {
                           "use server";
                           const val = formData.get("debit") as string;
                           await updateTransactionField(
@@ -212,10 +250,11 @@ export function PartyPage({ party, partyType }: PartyPageProps) {
                       </form>
                     </TableCell>
 
+                    {/* دائن */}
                     <TableCell className="text-right text-green-600">
                       <form
                         className="flex gap-2"
-                        action={async (formData: FormData) => {
+                        action={async (formData) => {
                           "use server";
                           const val = formData.get("credit") as string;
                           await updateTransactionField(
@@ -238,10 +277,11 @@ export function PartyPage({ party, partyType }: PartyPageProps) {
                       </form>
                     </TableCell>
 
+                    {/* البنك */}
                     <TableCell>
                       <form
                         className="flex gap-2"
-                        action={async (formData: FormData) => {
+                        action={async (formData) => {
                           "use server";
                           const val = formData.get("bank") as string;
                           await updateTransactionField(
@@ -256,7 +296,7 @@ export function PartyPage({ party, partyType }: PartyPageProps) {
                           defaultValue={transaction.bank || ""}
                         >
                           <SelectTrigger className="w-[180px]">
-                            <SelectValue placeholder="اختر البنك" />
+                            <SelectValue placeholder="مصادر التمويل" />
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="none"></SelectItem>
@@ -267,6 +307,31 @@ export function PartyPage({ party, partyType }: PartyPageProps) {
                             <SelectItem value="بنك الراجحى">
                               بنك الراجحى
                             </SelectItem>
+                            {partyType === "CUSTODY" && (
+                              <>
+                                <SelectItem value="تمويل إيجار">
+                                  تمويل إيجار
+                                </SelectItem>
+                                <SelectItem value="تمويل تلحيق">
+                                  تمويل تلحيق
+                                </SelectItem>
+                                <SelectItem value="تمويل من المكبس">
+                                  تمويل من المكبس
+                                </SelectItem>
+                                <SelectItem value="تمويل قص ألواح">
+                                  تمويل قص ألواح
+                                </SelectItem>
+                                <SelectItem value="بيع قشرة خشب">
+                                  بيع قشرة خشب
+                                </SelectItem>
+                                <SelectItem value="بيع أبلكاش">
+                                  بيع أبلكاش
+                                </SelectItem>
+                                <SelectItem value="مبيعات العملاء">
+                                  مبيعات العملاء
+                                </SelectItem>
+                              </>
+                            )}
                           </SelectContent>
                         </Select>
                         <Button type="submit" size="sm">
@@ -275,10 +340,11 @@ export function PartyPage({ party, partyType }: PartyPageProps) {
                       </form>
                     </TableCell>
 
+                    {/* التاريخ */}
                     <TableCell>
                       <form
                         className="flex gap-2"
-                        action={async (formData: FormData) => {
+                        action={async (formData) => {
                           "use server";
                           const val = formData.get("date") as string;
                           await updateTransactionField(
@@ -290,13 +356,11 @@ export function PartyPage({ party, partyType }: PartyPageProps) {
                       >
                         <Input
                           type="date"
-                          className="min-w-[180px] w-full"
                           name="date"
                           defaultValue={toLocalDatetimeString(
-                            transaction.date
-                              ? new Date(transaction.date)
-                              : new Date(transaction.createdAt)
+                            transaction.date ?? transaction.createdAt
                           )}
+                          className="min-w-[180px] w-full"
                         />
                         <Button type="submit" size="sm">
                           حفظ
@@ -304,6 +368,43 @@ export function PartyPage({ party, partyType }: PartyPageProps) {
                       </form>
                     </TableCell>
 
+                    {/* نوع المصروف */}
+                    {partyType === "CUSTODY" && (
+                      <TableCell>
+                        <form
+                          className="flex gap-2"
+                          action={async (formData) => {
+                            "use server";
+                            const val = formData.get("expense") as string;
+                            await updateTransactionField(
+                              transaction.id,
+                              "expense",
+                              val
+                            );
+                          }}
+                        >
+                          <Select
+                            name="expense"
+                            defaultValue={transaction.expense || ""}
+                          >
+                            <SelectTrigger className="w-[180px]">
+                              <SelectValue placeholder="نوع المصروف" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {expenses.map((expense) => (
+                                <SelectItem key={expense} value={expense}>
+                                  {expense}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <Button type="submit" size="sm">
+                            حفظ
+                          </Button>
+                        </form>
+                      </TableCell>
+                    )}
+                    {/* الرصيد */}
                     <TableCell className="text-right">
                       <Badge
                         variant={
@@ -316,6 +417,7 @@ export function PartyPage({ party, partyType }: PartyPageProps) {
                       </Badge>
                     </TableCell>
 
+                    {/* حذف */}
                     <TableCell>
                       <DeleteTransactionWithDialog
                         id={transaction.id}

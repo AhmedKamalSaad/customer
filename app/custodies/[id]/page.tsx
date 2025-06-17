@@ -31,6 +31,7 @@ export default async function CustodyPage({
           debit: tx.debit.toNumber(),
           credit: tx.credit.toNumber(),
           bank: tx.bank ?? "",
+          expense: tx.expense ?? "",
         })),
       }}
       partyType="CUSTODY"
