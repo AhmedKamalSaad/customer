@@ -1,4 +1,3 @@
-// components/PartiesTable.tsx
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
@@ -30,13 +29,24 @@ export function PartiesTable({
   parties: PartyWithTransactions[];
   partyType: PartyType;
 }) {
-  const typeLabel = partyType === PartyType.CUSTOMER ? "عميل" : "مورد";
-  const addRoute =
-    partyType === PartyType.CUSTOMER ? "/clients/add" : "/suppliers/add";
-  const detailsRoute = (id: string) =>
-    partyType === PartyType.CUSTOMER ? `/clients/${id}` : `/suppliers/${id}`;
+  const typeLabels: Record<PartyType, string> = {
+    CUSTOMER: "عميل",
+    SUPPLIER: "مورد",
+    CUSTODY: "عهدة",
+  };
 
-  // Calculate grand totals
+  const typeRoutes: Record<PartyType, string> = {
+    CUSTOMER: "clients",
+    SUPPLIER: "suppliers",
+    CUSTODY: "custodies",
+  };
+
+  const typeLabel = typeLabels[partyType];
+  const baseRoute = typeRoutes[partyType];
+
+  const addRoute = `/${baseRoute}/add`;
+  const detailsRoute = (id: string) => `/${baseRoute}/${id}`;
+
   const grandTotalDebit = parties.reduce(
     (sum, party) => sum + party.totalDebit,
     0
@@ -50,9 +60,7 @@ export function PartiesTable({
   return (
     <div className="container mx-auto py-8">
       <div className="flex justify-between items-center mb-8 flex-wrap gap-2">
-        <h1 className="text-2xl font-bold">
-          قائمة {partyType === PartyType.CUSTOMER ? "العملاء" : "الموردين"}
-        </h1>
+        <h1 className="text-2xl font-bold">قائمة {typeLabels[partyType]} </h1>
         <div className="flex gap-2 flex-wrap">
           <ExportPartiesExcelButton partyType={partyType} />
           <Link href={addRoute}>

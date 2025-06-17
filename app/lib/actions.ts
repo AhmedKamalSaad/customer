@@ -37,9 +37,16 @@ export async function addParty(formData: FormData) {
   const redirectPath =
     type === PartyType.CUSTOMER
       ? `/clients/${party.id}`
-      : `/suppliers/${party.id}`;
-
-  revalidatePath(type === PartyType.CUSTOMER ? "/clients" : "/suppliers");
+      : type === PartyType.SUPPLIER
+      ? `/suppliers/${party.id}`
+      : `/custodies/${party.id}`;
+  revalidatePath(
+    type === PartyType.CUSTOMER
+      ? "/clients"
+      : type === PartyType.SUPPLIER
+      ? "/suppliers"
+      : "/custodies"
+  );
   redirect(redirectPath);
 }
 
@@ -59,8 +66,13 @@ export async function deleteParty(formData: FormData) {
       prisma.party.delete({ where: { id } }),
     ]);
 
-    const isCustomer = party.type === PartyType.CUSTOMER;
-    revalidatePath(isCustomer ? "/clients" : "/suppliers");
+    revalidatePath(
+      party.type === PartyType.CUSTOMER
+        ? "/clients"
+        : party.type === PartyType.SUPPLIER
+        ? "/suppliers"
+        : "/custodies"
+    );
   } catch (error) {
     console.error("Failed to delete party:", error);
     throw error;
@@ -83,10 +95,14 @@ export async function addTransaction(formData: FormData) {
   }
 
   const date = rawData.date ? new Date(rawData.date) : new Date();
-  const redirectPath = `/${
-    rawData.partyType === PartyType.SUPPLIER ? "suppliers" : "clients"
-  }/${rawData.partyId}`;
+  const basePath =
+    rawData.partyType === PartyType.SUPPLIER
+      ? "suppliers"
+      : rawData.partyType === PartyType.CUSTODY
+      ? "custodies"
+      : "clients";
 
+  const redirectPath = `/${basePath}/${rawData.partyId}`;
   try {
     await prisma.$transaction([
       prisma.transaction.create({
@@ -144,9 +160,13 @@ export async function updateTransactionField(
 
   await recalculatePartyBalance(tx.partyId);
   revalidatePath(
-    `/${tx.party.type === PartyType.CUSTOMER ? "clients" : "suppliers"}/${
-      tx.partyId
-    }`
+    `/${
+      tx.party.type === PartyType.CUSTOMER
+        ? "clients"
+        : tx.party.type === PartyType.SUPPLIER
+        ? "suppliers"
+        : "custodies"
+    }/${tx.partyId}`
   );
 }
 
@@ -161,9 +181,13 @@ export async function deleteTransaction(id: string) {
   await prisma.transaction.delete({ where: { id } });
   await recalculatePartyBalance(tx.partyId);
   revalidatePath(
-    `/${tx.party.type === PartyType.CUSTOMER ? "clients" : "suppliers"}/${
-      tx.partyId
-    }`
+    `/${
+      tx.party.type === PartyType.CUSTOMER
+        ? "clients"
+        : tx.party.type === PartyType.SUPPLIER
+        ? "suppliers"
+        : "custodies"
+    }/${tx.partyId}`
   );
 }
 

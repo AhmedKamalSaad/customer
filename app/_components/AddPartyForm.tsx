@@ -21,7 +21,6 @@ export function AddPartyForm({
   partyType: PartyType;
   action: (formData: FormData) => void;
 }) {
-  const isSupplier = partyType === PartyType.SUPPLIER;
   const [isPending, startTransition] = useTransition();
 
   const handleSubmit = (formData: FormData) => {
@@ -29,13 +28,23 @@ export function AddPartyForm({
       action(formData);
     });
   };
+  const labels: Record<PartyType, string> = {
+    CUSTOMER: "اسم العميل",
+    SUPPLIER: "اسم المورد",
+    CUSTODY: "اسم العهدة",
+  };
 
+  const buttonLabels: Record<PartyType, string> = {
+    CUSTOMER: "إضافة العميل",
+    SUPPLIER: "إضافة المورد",
+    CUSTODY: "إضافة العهدة",
+  };
   return (
     <form action={handleSubmit} className="space-y-4">
       <input type="hidden" name="type" value={partyType} />
 
       <div>
-        <Label htmlFor="name">{isSupplier ? "اسم المورد" : "اسم العميل"}</Label>
+        <Label htmlFor="name">{labels[partyType]}</Label>
         <Input id="name" name="name" type="text" required className="mt-1" />
       </div>
 
@@ -53,7 +62,7 @@ export function AddPartyForm({
 
       <div>
         <Label htmlFor="bank">البنك</Label>
-        <Select name="bank" required={false}>
+        <Select name="bank">
           <SelectTrigger className="mt-1">
             <SelectValue placeholder="اختر البنك" />
           </SelectTrigger>
@@ -79,8 +88,7 @@ export function AddPartyForm({
       </div>
 
       <Button type="submit" className="w-full" disabled={isPending}>
-        {isPending ? "جاري الإضافة..." : isSupplier ? "إضافة المورد" : "إضافة العميل"}
+        {isPending ? "جاري الإضافة..." : buttonLabels[partyType]}
       </Button>
-    </form>
-  );
+    </form>  );
 }

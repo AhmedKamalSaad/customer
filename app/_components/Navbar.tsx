@@ -3,6 +3,7 @@ import Link from "next/link";
 const NavLinks = [
   { href: "/clients", label: "العملاء" },
   { href: "/suppliers", label: "الموردين" },
+  { href: "/custodies", label: "العهدة" },
 ];
 
 export function Navbar() {

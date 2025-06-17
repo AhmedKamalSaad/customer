@@ -23,7 +23,7 @@ export function DeletePartyConfirmDialog({ partyId }: { partyId: string }) {
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>هل أنت متأكد من حذف العميل؟</DialogTitle>
+          <DialogTitle>هل أنت متأكد من عملية الحذف ؟</DialogTitle>
         </DialogHeader>
         <form
           action={async (formData) => {
@@ -33,7 +33,11 @@ export function DeletePartyConfirmDialog({ partyId }: { partyId: string }) {
         >
           <input type="hidden" name="id" value={partyId} />
           <DialogFooter className="mt-4">
-            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setOpen(false)}
+            >
               إلغاء
             </Button>
             <Button type="submit" variant="destructive">
