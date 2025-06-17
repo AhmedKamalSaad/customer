@@ -11,9 +11,10 @@ export async function addParty(formData: FormData) {
   const initialBalance = parseFloat(formData.get("balance") as string) || 0;
   const bankValue = formData.get("bank") as string;
   const bank = bankValue === "none" ? "" : bankValue;
+  const expenseValue = formData.get("expense") as string;
+  const expense = expenseValue === "none" ? "" : expenseValue;
   const dateInput = formData.get("date") as string;
   const date = dateInput ? new Date(dateInput) : new Date();
-  const expense = formData.get("expense") as string;
 
   // أنشئ الطرف برصيد 0 مؤقتًا — سيتم احتسابه لاحقًا من المعاملات
   const party = await prisma.party.create({

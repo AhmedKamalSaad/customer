@@ -154,7 +154,7 @@ export function PartyPage({ party, partyType }: PartyPageProps) {
             {partyType === "CUSTODY" && (
               <div>
                 <Label htmlFor="expense">نوع المصروف</Label>
-                <Select name="expense" required>
+                <Select name="expense" >
                   <SelectTrigger className="mt-1">
                     <SelectValue placeholder="اختر نوع المصروف" />
                   </SelectTrigger>

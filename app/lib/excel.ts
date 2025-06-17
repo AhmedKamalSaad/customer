@@ -78,15 +78,15 @@ export async function exportTransactionsToExcel(partyId: string) {
             description: tx.description,
             debit: toArabicNumber(tx.debit.toFixed(2)),
             credit: toArabicNumber(tx.credit.toFixed(2)),
-            bank: tx.bank || "",
-            expense: tx.expense || "",
+            bank: tx.bank && tx.bank !== "none" ? tx.bank : "",
+            expense: tx.expense && tx.expense !== "none" ? tx.expense : "",
             date: formatFullDate(tx.date),
           }
         : {
             description: tx.description,
             debit: toArabicNumber(tx.debit.toFixed(2)),
             credit: toArabicNumber(tx.credit.toFixed(2)),
-            bank: tx.bank || "",
+            bank: tx.bank && tx.bank !== "none" ? tx.bank : "",
             date: formatFullDate(tx.date),
           };
 
