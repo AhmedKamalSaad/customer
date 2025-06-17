@@ -30,6 +30,8 @@ export default async function ClientPage({
           debit: tx.debit.toNumber(),
           credit: tx.credit.toNumber(),
           bank: tx.bank ?? "",
+          expense: tx.expense ?? undefined
+          
         })),
       }}
       partyType="CUSTOMER"

@@ -32,7 +32,7 @@ interface Transaction {
   bank: string;
   date: Date | null;
   createdAt: Date;
-  expense?: string; // تمت إضافته هنا مؤقتًا
+  expense?: string; 
 }
 
 interface PartyPageProps {
